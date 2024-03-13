@@ -10,7 +10,7 @@
     "test": "jest",
     "example": "tsc && node ./dist/example.js"
   },
-  "keywords": [],
+  "keywords": ["TypeScript", "CodeVideo"],
   "author": "Chris Frewin",
   "license": "MIT",
   "devDependencies": {

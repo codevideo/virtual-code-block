@@ -1,6 +1,6 @@
 {
   "name": "@fullstackcraftllc/virtual-code-block",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "TypeScript class that simulates a code editor environment.",
   "type": "module",
   "main": "dist/index.js",

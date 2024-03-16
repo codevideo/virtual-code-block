@@ -20,13 +20,15 @@ export class VirtualCodeBlock {
     this.codeLinesHistory.push(initialCodeLines.slice());
   }
 
-  applyActions(actions: Array<CodeAction>) {
+  applyCodeActions(actions: Array<CodeAction>): string {
     actions.forEach((action) => {
-      this.applyAction(action);
+      this.applyCodeAction(action);
     });
+
+    return this.getCode();
   }
 
-  applyAction(action: CodeAction) {
+  applyCodeAction(action: CodeAction) {
     // to save space, try to parse number out from action.value.
     // if it fails we know it is something else like a code string, so default numTimes to 1
     const numTimes = parseInt(action.value) || 1;
@@ -195,5 +197,9 @@ export class VirtualCodeBlock {
 
   getCodeLinesHistory(): Array<Array<string>> {
     return this.codeLinesHistory;
+  }
+
+  getCodeAfterEachStep(): Array<string> {
+    return this.codeLinesHistory.map((codeLines) => codeLines.join("\n"));
   }
 }

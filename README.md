@@ -1,17 +1,21 @@
 # virtual-code-block
 
+![NPM Version](https://img.shields.io/npm/v/:fullstackcraftllc/virtual-code-block)
+
 `virtual-code-block` is a TypeScript class that simulates a code editor environment with features like cursor navigation, text insertion, and line manipulation. It provides a flexible interface for applying various code editing actions such as typing, moving the cursor, and executing commands. This lightweight and versatile library is ideal for building educational tools, code playgrounds, and interactive coding environments within web applications.
+
+This library heavily relys on the types from [codevideo-types](https://github.com/codevideo/codevideo-types)
 
 ## Example Usage
 
-```ts
+```typescript
 import { VirtualCodeBlock } from '@fullstackcraftllc/virtual-code-block';
 
 // Initialize a VirtualCodeBlock instance with initial code lines
 const initialCodeLines = [
   'function greet(name) {',
   '    return "Hello, " + name + "!";',
-  '}'
+ '}'
 ];
 const virtualCodeBlock = new VirtualCodeBlock(initialCodeLines);
 
@@ -41,11 +45,11 @@ console.log(actionsApplied);
 
 Apply a single action to the code.
 
-### `applyActions(actions: Array<IAction>): void`
+### `applyActions(actions: Array<IAction>): string`
 
-Apply a series of actions to the code.
+Apply a series of actions to the code. Returns the final code as a string.
 
-### `getCurrentCode(): Array<string>` 
+### `getCurrentCode(): Array<string>`
 
 Get the current code lines.
 
@@ -60,6 +64,22 @@ Get the actions that were applied to the code.
 ### `getCode(): string`
 
 Get the code as a single string.
+
+### `getCodeLinesHistory(): Array<Array<string>>`
+
+Get the history of code lines.
+
+### `getCodeAfterEachStep(): Array<string>`
+
+Get the code after each step.
+
+### `getEditorStateAfterEachStep(): Array<{ code: string; caretPosition: { row: number; col: number } }>`
+
+Get the editor state after each step.
+
+### `getDataForAnnotatedFrames(): Array<{ actionApplied: IAction; code: string; caretPosition: { row: number; col: number }; speechCaptions: Array<ISpeechCaption>; }>`
+
+Get data for annotated frames.
 
 ## Why?
 

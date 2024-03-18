@@ -63,6 +63,6 @@ Get the code as a single string.
 
 ## Why?
 
-Why do we need a seemingly useless class? This library, along with [`syntax-spy`](https://github.com/codevideo/syntax-spy), are used to validate steps across the CodeVideo ecosystem. This is a small part of a larger project to create a declarative way to build educational software courses.
+Why do we need a seemingly useless class? This library, along with [`syntax-spy`](https://github.com/codevideo/syntax-spy), are used to validate steps across the CodeVideo ecosystem. This is a small part of a larger project to create a declarative way to build step by step educational software courses.
 
-See more at [codevideo.com](https://codevideo.com)
+See more at [codevideo.io](https://codevideo.com)

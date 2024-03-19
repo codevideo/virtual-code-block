@@ -10,6 +10,7 @@ export default  [
       format: "es",
     },
     plugins: [typescript()],
+    external: ["@fullstackcraftllc/codevideo-types"]
   },
   // type declarations
   {
@@ -23,6 +24,7 @@ export default  [
     plugins: [
       dts(),
     ],
+    external: ["@fullstackcraftllc/codevideo-types"]
   },
 ];
 

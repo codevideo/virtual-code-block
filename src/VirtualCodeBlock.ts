@@ -9,6 +9,10 @@ import {
 import { getAdjacentSpeechCaptionsBasedOnCodeActionIndex } from "./utils/getAdjacentSpeechCaptionsBasedOnCodeActionIndex";
 
 // TODO: needs highlighting feature later (moving cursor while shift / command is pressed)
+
+/**
+ * Represents a virtual code block that can be manipulated by a series of actions.
+ */
 export class VirtualCodeBlock {
   private caretRow = 0; // 'X'
   private caretColumn = 0; // 'Y'
@@ -34,6 +38,11 @@ export class VirtualCodeBlock {
     this.codeLinesHistory.push(initialCodeLines.slice());
   }
 
+  /**
+   * Applies a series of actions to the virtual code block.
+   * @param actions The actions to apply.
+   * @returns The code after the actions have been applied.
+   */
   applyActions(actions: Array<IAction>): string {
     actions.forEach((action) => {
       this.applyAction(action);
@@ -42,7 +51,12 @@ export class VirtualCodeBlock {
     return this.getCode();
   }
 
-  applyAction(action: IAction) {
+  /**
+   * Applies a single action to the virtual code block.
+   * @param action The action to apply.
+   * @returns The code after the action has been applied. Note the code can be identical to a previous step if the action applied was not a code action.
+   */
+  applyAction(action: IAction): string {
     // parse number out from action.value
     // if it fails we know it is something else like a code string, so default numTimes to 1
     const numTimes = parseInt(action.value) || 1;
@@ -206,29 +220,59 @@ export class VirtualCodeBlock {
     if (this.verbose) {
       console.log(this.getCodeLines());
     }
+
+    // Return the code after the action has been applied
+    return this.getCode();
   }
 
+  /**
+   * Returns the code lines of the virtual code block.
+   * @returns The code lines of the virtual code block.
+   */
   getCodeLines(): Array<string> {
     return this.codeLines;
   }
 
+  /**
+   * Returns the current caret position of the virtual code block.
+   * @returns The current caret position of the virtual code block.
+   */
   getCurrentCaretPosition(): { row: number; column: number } {
     return { row: this.caretRow, column: this.caretColumn };
   }
 
+  /**
+   * Sets the current caret position of the virtual code block.
+   * @param row The row to set the caret position to.
+   * @param column The column to set the caret position to.
+   */
   setCurrentCaretPosition(row: number, column: number) {
     this.caretRow = row;
     this.caretColumn = column;
   }
 
+  /**
+   * Gets the actions applied to the virtual code block.
+   * @returns The actions applied to the virtual code block.
+   */
   getActionsApplied(): Array<IAction> {
     return this.actionsApplied;
   }
 
+  /**
+   * Gets the code after the actions have been applied.
+   * @returns The code after the actions have been applied.
+   */
   getCode(): string {
     return this.codeLines.join("\n");
   }
 
+  /**
+   * Gets the code at a specific action index that has been applied.
+   * @param actionIndex The index of the action to get the code after.
+   * @returns The code after the action has been applied.
+   * @throws An error if the action index is out of bounds.
+   */
   getCodeAtActionIndex(actionIndex: number): string {
     if (actionIndex > this.codeLinesHistory.length - 1) {
       throw new Error("Action index out of bounds");
@@ -236,6 +280,10 @@ export class VirtualCodeBlock {
     return this.codeLinesHistory[actionIndex].join("\n");
   }
 
+  /**
+   * Returns all historical changes to the code block.
+   * @returns An array of code lines at each step.
+   */
   getCodeLinesHistory(): Array<Array<string>> {
     return this.codeLinesHistory;
   }

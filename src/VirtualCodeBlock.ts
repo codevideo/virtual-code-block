@@ -5,6 +5,7 @@ import {
   ISpeechCaption,
   isCodeAction,
   isSpeakAction,
+  isRepeatableAction,
 } from "@fullstackcraftllc/codevideo-types";
 import { getAdjacentSpeechCaptionsBasedOnCodeActionIndex } from "./utils/getAdjacentSpeechCaptionsBasedOnCodeActionIndex";
 
@@ -59,7 +60,10 @@ export class VirtualCodeBlock {
   applyAction(action: IAction): string {
     // parse number out from action.value
     // if it fails we know it is something else like a code string, so default numTimes to 1
-    const numTimes = parseInt(action.value) || 1;
+    let numTimes = 1;
+    if (isRepeatableAction(action)) {
+      numTimes = parseInt(action.value);
+    }
     const currentLineLength = this.codeLines[this.caretRow].length;
     switch (action.name) {
       case "enter":
@@ -78,14 +82,15 @@ export class VirtualCodeBlock {
         }
         break;
       case "type-editor":
-        // type text simply inserts the value using at the current caret position
-        let currentLine = this.codeLines[this.caretRow];
-        this.codeLines[this.caretRow] =
-          currentLine.substring(0, this.caretColumn) +
-          action.value +
-          currentLine.substring(this.caretColumn);
-        // ensure the caret column is at the end of the inserted text (whatever was before, if anything + the length of the inserted text)
-        this.caretColumn += action.value.length;
+        // with type-editor, the caret is always at the end of the typed text
+        const typedStringLength = action.value.length;
+        for (let i = 0; i < numTimes; i++) {
+          this.codeLines[this.caretRow] =
+            this.codeLines[this.caretRow].substring(0, this.caretColumn) +
+            action.value +
+            this.codeLines[this.caretRow].substring(this.caretColumn);
+          this.caretColumn += typedStringLength;
+        }
         break;
       case "arrow-down":
         // for numTimes, move the caret down if the current row is not the last row

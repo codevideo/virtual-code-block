@@ -342,14 +342,17 @@ export class VirtualCodeBlock {
     caretPosition: { row: number; col: number };
     speechCaptions: Array<ISpeechCaption>;
   }> {
-    return this.codeLinesHistory.map((codeLines, index) => {
-      const speechCaptions = getAdjacentSpeechCaptionsBasedOnCodeActionIndex(
-        index,
-        this.actionsApplied
-      );
+    return this.actionsApplied.map((actionApplied, index) => {
+      const speechCaptions = []
+      if (isSpeakAction(actionApplied)) {
+        speechCaptions.push({
+          speechType: actionApplied.name,
+          speechValue: actionApplied.value,
+        });
+      }
       return {
         actionApplied: this.actionsApplied[index],
-        code: codeLines.join("\n"),
+        code: this.getCodeAtActionIndex(index),
         caretPosition: {
           row: this.caretPositionHistory[index].row,
           col: this.caretPositionHistory[index].column,

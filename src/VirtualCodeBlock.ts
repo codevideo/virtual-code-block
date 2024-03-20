@@ -24,19 +24,26 @@ export class VirtualCodeBlock {
   private verbose: boolean = false;
   private codeLinesHistory: Array<Array<string>> = [];
   private speechCaptionHistory: Array<ISpeechCaption> = [];
+  private caretPositionHistory: Array<{ row: number; column: number }> = [];
 
   constructor(initialCodeLines: Array<string>, verbose?: boolean) {
-    // if the initial code lines are empty, add an empty string to start
+    // handle case if initialCodeLines is empty - we need at least one line
     if (initialCodeLines.length === 0) {
-      initialCodeLines.push("");
+      initialCodeLines = [""];
     }
-
+    // now consistently set the initial state
     this.codeLines = initialCodeLines;
-    this.actionsApplied = [];
-    this.codeActionsApplied = [];
-    this.speakActionsApplied = [];
-    this.speechCaptionHistory = [];
+    this.actionsApplied = [
+      { name: "type-editor", value: initialCodeLines.join("\n") },
+    ];
+    this.codeActionsApplied = [
+      { name: "type-editor", value: initialCodeLines.join("\n") },
+    ];
+    this.codeLinesHistory = [];
     this.codeLinesHistory.push(initialCodeLines.slice());
+    this.speakActionsApplied = [];
+    this.speechCaptionHistory = [{ speechType: "", speechValue: "" }];
+    this.caretPositionHistory = [{ row: 0, column: 0 }];
   }
 
   /**
@@ -218,8 +225,13 @@ export class VirtualCodeBlock {
       });
     }
 
-    // Append the current code to the code history
-    this.codeLinesHistory.push(this.codeLines.slice());
+    // Append a copy of the current code lines to the code history
+    const codeLinesCopy = this.codeLines.slice();
+    this.codeLinesHistory.push(codeLinesCopy);
+    this.caretPositionHistory.push({
+      row: this.caretRow,
+      column: this.caretColumn,
+    });
 
     // If verbose is true, log the action and the current code
     if (this.verbose) {
@@ -286,7 +298,7 @@ export class VirtualCodeBlock {
   }
 
   /**
-   * Returns all historical changes to the code block.
+   * Returns an array of code lines at each step.
    * @returns An array of code lines at each step.
    */
   getCodeLinesHistory(): Array<Array<string>> {
@@ -295,6 +307,10 @@ export class VirtualCodeBlock {
 
   getSpeakActionsApplied(): Array<SpeakAction> {
     return this.speakActionsApplied;
+  }
+
+  getSpeechCaptionHistory(): Array<ISpeechCaption> {
+    return this.speechCaptionHistory;
   }
 
   getCodeActionsApplied(): Array<CodeAction> {
@@ -309,10 +325,13 @@ export class VirtualCodeBlock {
     code: string;
     caretPosition: { row: number; col: number };
   }> {
-    return this.codeLinesHistory.map((codeLines) => {
+    return this.codeLinesHistory.map((codeLines, index) => {
       return {
         code: codeLines.join("\n"),
-        caretPosition: { row: this.caretRow, col: this.caretColumn },
+        caretPosition: {
+          row: this.caretPositionHistory[index].row,
+          col: this.caretPositionHistory[index].column,
+        },
       };
     });
   }
@@ -331,7 +350,10 @@ export class VirtualCodeBlock {
       return {
         actionApplied: this.actionsApplied[index],
         code: codeLines.join("\n"),
-        caretPosition: { row: this.caretRow, col: this.caretColumn },
+        caretPosition: {
+          row: this.caretPositionHistory[index].row,
+          col: this.caretPositionHistory[index].column,
+        },
         speechCaptions,
       };
     });

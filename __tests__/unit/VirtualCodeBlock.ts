@@ -4,12 +4,13 @@ import { IAction } from "@fullstackcraftllc/codevideo-types";
 
 describe("VirtualCodeBlock", () => {
   describe("applyActions", () => {
-    it("should initialize all arrays to empty with an empty intial code", () => {
+    it("should initialize all arrays consistently if the initial code is empty", () => {
       const virtualCodeBlock = new VirtualCodeBlock([]);
-      expect(virtualCodeBlock.getCodeActionsApplied()).toEqual([]);
-      expect(virtualCodeBlock.getCodeLinesHistory()).toEqual([[""]]);
       expect(virtualCodeBlock.getCodeLines()).toEqual([""]);
+      expect(virtualCodeBlock.getCodeActionsApplied()).toEqual([{ name: "type-editor", value: "" }]);
+      expect(virtualCodeBlock.getCodeLinesHistory()).toEqual([[""]]);
       expect(virtualCodeBlock.getSpeakActionsApplied()).toEqual([]);
+      expect(virtualCodeBlock.getSpeechCaptionHistory()).toEqual([{ speechType: "", speechValue: "" }]);
     });
 
     it("should add space at the beginning of a line", () => {
@@ -185,6 +186,7 @@ const someFunction = () => {
         { name: "speak-after", value: "And that's the end of the lesson!" },
       ];
       virtualCodeBlock.applyActions(actions);
+      actions.unshift({ name: "type-editor", value: "" });
       expect(virtualCodeBlock.getActionsApplied()).toEqual(actions);
       expect(virtualCodeBlock.getSpeakActionsApplied()).toEqual([
         { name: "speak-before", value: "Let's get this lesson started" },
@@ -192,6 +194,7 @@ const someFunction = () => {
         { name: "speak-after", value: "And that's the end of the lesson!" },
       ]);
       expect(virtualCodeBlock.getCodeActionsApplied()).toEqual([
+        { name: "type-editor", value: "" },
         { name: "type-editor", value: "const someFunction = () => {" },
         { name: "enter", value: "1" },
         { name: "type-editor", value: "    console.log('hello world!')" },
@@ -216,18 +219,34 @@ const someFunction = () => {
         { name: "enter", value: "1" },
         { name: "type-editor", value: "}" },
       ]);
-      expect(virtualCodeBlock.getCodeLinesHistory()).toEqual([
-        [""],
-        ["const someFunction = () => {"],
-        ["const someFunction = () => {", ""],
-        ["const someFunction = () => {", "    console.log('hello world!')"],
-        ["const someFunction = () => {", "    console.log('hello world!')", ""],
-        [
-          "const someFunction = () => {",
-          "    console.log('hello world!')",
-          "}",
-        ],
+      const codeLinesHistory = virtualCodeBlock.getCodeLinesHistory();
+      expect(codeLinesHistory.length).toEqual(6);
+      expect(codeLinesHistory[0]).toEqual([""]);
+      expect(codeLinesHistory[1]).toEqual(["const someFunction = () => {"]);
+      expect(codeLinesHistory[2]).toEqual(["const someFunction = () => {", ""]);
+      expect(codeLinesHistory[3]).toEqual([
+        "const someFunction = () => {",
+        "    console.log('hello world!')",
       ]);
+      expect(codeLinesHistory[4]).toEqual([
+        "const someFunction = () => {",
+        "    console.log('hello world!')",
+        "",
+      ]);
+      expect(codeLinesHistory[5]).toEqual([
+        "const someFunction = () => {",
+        "    console.log('hello world!')",
+        "}",
+      ]);
+    });
+
+    it("should show two empty lines in codelines after enter is applied", () => {
+      const virtualCodeBlock = new VirtualCodeBlock([], true);
+      virtualCodeBlock.applyActions([{ name: "enter", value: "1" }]);
+      const codeLines = virtualCodeBlock.getCodeLines();
+      expect(codeLines.length).toEqual(2);
+      expect(codeLines[0]).toEqual("");
+      expect(codeLines[1]).toEqual("");
     });
 
     it("should have the correct final caret position with a step by step example", () => {
@@ -344,6 +363,81 @@ const someFunction = () => {
         row: 3,
         column: 4,
       });
+    });
+  });
+
+  describe("getDataForAnnotatedFrames", () => {
+
+    it("should work with a single type-editor action", () => {
+      const virtualCodeBlock = new VirtualCodeBlock([], true);
+      virtualCodeBlock.applyActions([{ name: "type-editor", value: "12345" }]);
+      expect(virtualCodeBlock.getActionsApplied()).toEqual([
+        { name: "type-editor", value: "" },
+        { name: "type-editor", value: "12345" },
+      ]);
+      expect(virtualCodeBlock.getCodeActionsApplied()).toEqual([
+        { name: "type-editor", value: "" },
+        { name: "type-editor", value: "12345" },
+      ]);
+      expect(virtualCodeBlock.getCode()).toEqual("12345");
+      const codeLinesHistory = virtualCodeBlock.getCodeLinesHistory();
+      expect(codeLinesHistory.length).toEqual(2);
+      expect(codeLinesHistory[0]).toEqual([""]);
+      expect(codeLinesHistory[1]).toEqual(["12345"]);
+      const dataForAnnotatedFrames = virtualCodeBlock.getDataForAnnotatedFrames();
+      expect(dataForAnnotatedFrames.length).toEqual(2);
+      expect(dataForAnnotatedFrames[1].actionApplied).toEqual({
+        name: "type-editor",
+        value: "12345",
+      });
+      expect(dataForAnnotatedFrames[1].code).toEqual("12345");
+      expect(dataForAnnotatedFrames[1].caretPosition).toEqual({ row: 0, col: 5 });
+      expect(dataForAnnotatedFrames[1].speechCaptions).toEqual([]);
+    });
+
+    it("should have the correct history for a complex one line example", () => {
+      const virtualCodeBlock = new VirtualCodeBlock([], true);
+      virtualCodeBlock.applyActions([
+        { name: "type-editor", value: "12345678910" },
+        { name: "backspace", value: "5" },
+        { name: "type-editor", value: "abc" },
+      ]);
+
+      const dataForAnnotatedFrames = virtualCodeBlock.getDataForAnnotatedFrames();
+      expect(dataForAnnotatedFrames.length).toEqual(4);
+      expect(dataForAnnotatedFrames[0].actionApplied).toEqual({
+        name: "type-editor",
+        value: "",
+      });
+      expect(dataForAnnotatedFrames[0].code).toEqual("");
+      expect(dataForAnnotatedFrames[0].caretPosition).toEqual({ row: 0, col: 0 });
+      expect(dataForAnnotatedFrames[0].speechCaptions).toEqual([]);
+
+
+      expect(dataForAnnotatedFrames[1].actionApplied).toEqual({
+        name: "type-editor",
+        value: "12345678910",
+      });
+      expect(dataForAnnotatedFrames[1].code).toEqual("12345678910");
+      expect(dataForAnnotatedFrames[1].caretPosition).toEqual({ row: 0, col: 11 });
+      expect(dataForAnnotatedFrames[1].speechCaptions).toEqual([]);
+
+      expect(dataForAnnotatedFrames[2].actionApplied).toEqual({
+        name: "backspace",
+        value: "5",
+      });
+      expect(dataForAnnotatedFrames[2].code).toEqual("123456");
+      expect(dataForAnnotatedFrames[2].caretPosition).toEqual({ row: 0, col: 6 });
+      expect(dataForAnnotatedFrames[2].speechCaptions).toEqual([]);
+
+      expect(dataForAnnotatedFrames[3].actionApplied).toEqual({
+        name: "type-editor",
+        value: "abc",
+      });
+      expect(dataForAnnotatedFrames[3].code).toEqual("123456abc");
+      expect(dataForAnnotatedFrames[3].caretPosition).toEqual({ row: 0, col: 9 });
+      expect(dataForAnnotatedFrames[3].speechCaptions).toEqual([]);
+      
     });
   });
 });
